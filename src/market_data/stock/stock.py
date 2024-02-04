@@ -4,11 +4,13 @@
 每个股票只能有一个实例
 """
 
+from market_data._base.exchange_base import ExchangeBase
+
 
 class Stock(object):
     _instances = {}  # 保存所有股票实例的字典，多级字典，第一级键为交易所，第二级键为股票代码
 
-    def __new__(cls, exchange, code):
+    def __new__(cls, exchange: ExchangeBase, code: str):
         """
         创建股票实例
         :param exchange: 交易所
@@ -21,7 +23,7 @@ class Stock(object):
             cls._instances[exchange][code] = super(Stock, cls).__new__(cls)
         return cls._instances[exchange][code]
 
-    def __init__(self, exchange, code):
+    def __init__(self, exchange: ExchangeBase, code: str):
         """
         初始化股票实例
         :param exchange: 交易所

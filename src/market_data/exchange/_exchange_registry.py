@@ -23,19 +23,28 @@ from market_data._base.exchange_base import ExchangeBase
 
 
 class Exchange(ExchangeBase):
-    def __new__(cls, code):
+    def __new__(cls, exchange_id):
         """
         创建交易所实例
-        :param code: 交易所代码
+        :param exchange_id: 交易所代码
         :return: 交易所实例
         """
-        if code not in _exchanges_table:
-            raise ValueError(f"Exchange '{code}' is not registered.")
+        if exchange_id not in _exchanges_table:
+            raise ValueError(f"Exchange '{exchange_id}' is not registered.")
         return super(Exchange, cls).__new__(cls)
 
     @property
     def name(self):
-        return _get_exchange_name(self._code)
+        return _get_exchange_name(self._exchange_id)
+
+    def __str__(self):
+        return f"Exchange(id={self._exchange_id}, name={self.name})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __hash__(self):
+        return self._exchange_id
 
 
 """
@@ -44,18 +53,21 @@ class Exchange(ExchangeBase):
 
 
 class ExchangeRegistry:
-    def __init__(self):
-        self.exchange_id_counter = 0
+    _exchange_id_counter = 0
 
-    def register_exchange(self, name: str) -> Exchange:
+    def __init__(self):
+        ...
+
+    @classmethod
+    def register_exchange(cls, name: str) -> Exchange:
         if name in _exchanges_table.values():
             raise ValueError(f"Exchange '{name}' is already registered.")
 
-        exchange_id = self.exchange_id_counter
+        exchange_id = cls._exchange_id_counter
         _exchanges_table[exchange_id] = name
         _exchanges_table_reverse[name] = exchange_id
         _exchanges_instance[exchange_id] = Exchange(exchange_id)
-        self.exchange_id_counter += 1
+        cls._exchange_id_counter += 1
         return _exchanges_instance[exchange_id]
 
     @classmethod

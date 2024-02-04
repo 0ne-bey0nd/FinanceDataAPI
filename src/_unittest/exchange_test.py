@@ -17,15 +17,15 @@ class TestExchange(unittest.TestCase):
         LSE = exchange_manager.register_exchange("LSE")
 
         # 获取交易所ID
-        self.assertEqual(exchange_manager.get_exchange_id_by_name("NYSE"), NYSE.code)
-        self.assertEqual(exchange_manager.get_exchange_id_by_name("NASDAQ"), NASDAQ.code)
-        self.assertEqual(exchange_manager.get_exchange_id_by_name("LSE"), LSE.code)
+        self.assertEqual(exchange_manager.get_exchange_id_by_name("NYSE"), NYSE.id)
+        self.assertEqual(exchange_manager.get_exchange_id_by_name("NASDAQ"), NASDAQ.id)
+        self.assertEqual(exchange_manager.get_exchange_id_by_name("LSE"), LSE.id)
 
         # 获取所有注册的交易所
         all_exchanges = exchange_manager.get_all_exchanges()
         # self.assertDictContainsSubset({NYSE: "NYSE", NASDAQ: "NASDAQ", LSE: "LSE"}, all_exchanges)
         # print(all_exchanges)
-        self.assertTrue(all_exchanges.items() >= {NYSE.code: NYSE, NASDAQ.code: NASDAQ, LSE.code: LSE}.items())
+        self.assertTrue(all_exchanges.items() >= {NYSE.id: NYSE, NASDAQ.id: NASDAQ, LSE.id: LSE}.items())
 
         # 获取交易所名称
         self.assertEqual(NYSE.name, "NYSE")
@@ -46,6 +46,8 @@ class TestExchange(unittest.TestCase):
 class TestSSE(unittest.TestCase):
     def test_exchange(self):
         exchange_manager = ExchangeManager()
+
+        # print(exchange_manager.get_all_exchanges())
 
         with self.assertRaises(ValueError):
             exchange_manager.register_exchange("SSE")
