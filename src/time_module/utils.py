@@ -29,6 +29,7 @@ def get_date_by_ymd(year: int, month: int, day: int) -> date:
 
 def main():
     print(get_date("20240203"))
+    print(get_date("2024-02-03"))
     ...
 
 

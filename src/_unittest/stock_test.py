@@ -7,3 +7,7 @@ class TestStock(unittest.TestCase):
     def test_stock(self):
         stock = Stock(SZSE, '000001')
         print(stock)
+
+        # 重复创建股票实例
+        another_stock = Stock(SZSE, '000001')
+        self.assertIs(stock, another_stock)

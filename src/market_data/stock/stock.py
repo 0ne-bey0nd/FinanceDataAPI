@@ -5,6 +5,7 @@
 """
 
 from market_data._base.exchange_base import ExchangeBase
+from market_data.candlestick.day import CandlestickDay
 
 
 class Stock(object):
@@ -41,3 +42,11 @@ class Stock(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def get_day_candlestick(self, date):
+        """
+        获取日K线数据
+        :param date: 日期
+        :return: 日K线数据
+        """
+        return CandlestickDay(date, 1, 2, 3, 4, 5, 6)
