@@ -28,7 +28,7 @@ class DataAPICandlestickDayBase(DataAPICandlestickBase):
     def __init__(self, api_suffix: str, param_list: dict):
         super().__init__(api_suffix, param_list)
 
-    def get_one_day_candlestick_instance(self, code: str, date: date) -> CandlestickDay:
+    def get_one_day_candlestick_instance(self, code: str, date: date, use_cache: bool) -> CandlestickDay:
         raise NotImplementedError("get_one_day_candlestick_instance() must be implemented")
 
     ...

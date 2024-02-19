@@ -64,9 +64,10 @@ class DataAPICandlestickDaySZSE(DataAPICandlestickDayBase):
         self.cache_data[code][CandlestickDictKeyDay.DATE] = pd.to_datetime(
             self.cache_data[code][CandlestickDictKeyDay.DATE])
 
-    def get_one_day_candlestick_instance(self, code: str, date: date) -> CandlestickDay:
-        if code not in self.cache_data:
+    def get_one_day_candlestick_instance(self, code: str, date: date, use_cache: bool = True) -> CandlestickDay:
+        if not use_cache or code not in self.cache_data:
             self.refresh_cache_data(code)
+
         data = self.cache_data[code]
         # print(data)
         # print(data.dtypes)
@@ -80,13 +81,20 @@ class DataAPICandlestickDaySZSE(DataAPICandlestickDayBase):
 
 
 if __name__ == '__main__':
-    code = "399300"
+    code = "000001"
     date = datetime.today().date()
-    # date = datetime(2023, 10, 4).date()
+    # date = datetime(2024, 2, 7).date()
     api = DataAPICandlestickDaySZSE()
     # print(api.get_api_url(code))
     # print(api.request_api(code))
-    print(api.get_one_day_candlestick_instance(code=code, date=date))
+    # print(api.get_one_day_candlestick_instance(code=code, date=date))
+    sleep_time = 0.1
+    while True:
+        print(api.get_one_day_candlestick_instance(code=code, date=date,use_cache=False), end='')
+        import time
+
+        time.sleep(sleep_time)
+        print('\r', end='')
 
     # code01 = "000333"
     # code02 = "002415"
