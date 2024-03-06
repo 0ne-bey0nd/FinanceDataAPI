@@ -1,35 +1,43 @@
-from producer import get_trade_day_data
 import pandas as pd
+from market_data.pipeline._base import processor_base
 
 
-def process_trade_day_data(trade_day_data: pd.DataFrame) -> pd.DataFrame:
-    in_table = trade_day_data.copy()
+class TradeDayProcessor(processor_base.ProcessorBase):
+    def __init__(self, *args, **kwargs):
+        super(TradeDayProcessor, self).__init__(*args, **kwargs)
 
-    out_table_column_name_list = ["date", "is_trade_day"]
+    def process(self, input_data: pd.DataFrame, *args, **kwargs) -> pd.DataFrame:
+        return self.process_trade_day_data(input_data)
 
-    in_table_date_column_name = "calendar_date"
-    in_table_is_trade_day_column_name = "is_trading_day"
+    def process_trade_day_data(self, trade_day_data: pd.DataFrame) -> pd.DataFrame:
+        in_table = trade_day_data.copy()
 
-    in_table_date_column = in_table[in_table_date_column_name]
-    in_table_is_trade_day_column = in_table[in_table_is_trade_day_column_name]
+        out_table_column_name_list = ["date", "is_trade_day"]
 
-    try:
-        in_table_date_column = pd.to_datetime(in_table_date_column)
-        in_table_is_trade_day_column = in_table_is_trade_day_column.astype("uint8")
-    except Exception as e:
-        print(f"Error: {e}")
+        in_table_date_column_name = "calendar_date"
+        in_table_is_trade_day_column_name = "is_trading_day"
 
+        in_table_date_column = in_table[in_table_date_column_name]
+        in_table_is_trade_day_column = in_table[in_table_is_trade_day_column_name]
 
-    out_table = pd.DataFrame({out_table_column_name_list[0]: in_table_date_column,
-                              out_table_column_name_list[1]: in_table_is_trade_day_column})
+        try:
+            in_table_date_column = pd.to_datetime(in_table_date_column)
+            in_table_is_trade_day_column = in_table_is_trade_day_column.astype("uint8")
+        except Exception as e:
+            print(f"Error: {e}")
 
-    return out_table
+        out_table = pd.DataFrame({out_table_column_name_list[0]: in_table_date_column,
+                                  out_table_column_name_list[1]: in_table_is_trade_day_column})
+
+        return out_table
 
 
 if __name__ == '__main__':
-    trade_day_data = get_trade_day_data()
+    from producer import TradeDayProducer
+    trade_day_data = TradeDayProducer().produce()
     # print(trade_day_data)
-    processed_trade_day_data = process_trade_day_data(trade_day_data)
+    processor = TradeDayProcessor()
+    processed_trade_day_data = processor.process_trade_day_data(trade_day_data)
 
     print(processed_trade_day_data)
     for idx, column_name in enumerate(processed_trade_day_data.columns):
