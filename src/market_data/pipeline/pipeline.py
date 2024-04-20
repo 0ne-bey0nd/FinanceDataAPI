@@ -11,7 +11,7 @@ class Pipeline(object):
 
     def add_component_class(self, component_class):
         self.component_class_queue.put(component_class)
-        self.component_name_to_class_dict[component_class.__name__] = component_class
+        self.component_name_to_class_dict[component_class.get_component_name()] = component_class
 
     def run(self):
         self.is_running = True
@@ -65,14 +65,14 @@ if __name__ == '__main__':
         for name, obj in inspect.getmembers(module):
             if inspect.isclass(obj) and issubclass(obj, ComponentBase):
                 component_class_list.append(obj)
-                component_name_to_class_dict[obj.__name__] = obj
+                component_name_to_class_dict[obj.get_component_name()] = obj
 
     print(component_name_to_class_dict)
 
     pipeline = Pipeline()
-    pipeline.add_component_class(component_name_to_class_dict['TradeDayProducer'])
-    pipeline.add_component_class(component_name_to_class_dict['TradeDayProcessor'])
-    pipeline.add_component_class(component_name_to_class_dict['TradeDayStorager'])
+    pipeline.add_component_class(component_name_to_class_dict['BaoStockTradeDayProducer'])
+    pipeline.add_component_class(component_name_to_class_dict['BaoStockTradeDayProcessor'])
+    pipeline.add_component_class(component_name_to_class_dict['BaoStockTradeDayStorager'])
 
     print(pipeline.component_name_to_class_dict)
 

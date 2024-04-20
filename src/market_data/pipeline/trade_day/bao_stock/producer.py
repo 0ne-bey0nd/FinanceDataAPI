@@ -5,6 +5,8 @@ from market_data.pipeline._base import ProducerBase
 
 
 class TradeDayProducer(ProducerBase):
+    def __init__(self, *args, **kwargs):
+        super(TradeDayProducer, self).__init__(*args, **kwargs)
 
     def produce(self, *args, **kwargs) -> pd.DataFrame:
         return self.get_trade_day_data()
@@ -25,6 +27,8 @@ class TradeDayProducer(ProducerBase):
         result = pd.DataFrame(data_list, columns=rs.fields)
         bs.logout()
         return result
+
+
 
 
 if __name__ == '__main__':
