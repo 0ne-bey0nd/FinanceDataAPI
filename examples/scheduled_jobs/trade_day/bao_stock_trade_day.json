@@ -1,0 +1,19 @@
+{
+    "pipeline_structure": {
+        "producer_0": {
+            "component_class_name": "BaoStockTradeDayProducer",
+            "pre_component_name": "",
+            "component_arguments": {}
+        },
+        "processor_0": {
+            "component_class_name": "BaoStockTradeDayProcessor",
+            "pre_component_name": "producer_0",
+            "component_arguments": {}
+        },
+        "storager_0": {
+            "component_class_name": "BaoStockTradeDayStorager",
+            "pre_component_name": "storager_0",
+            "component_arguments": {}
+        }
+    }
+}

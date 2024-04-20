@@ -1,11 +1,16 @@
 import asyncio
+import json
 import time
+from typing import Optional, Dict, Any, List
 
+import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 import uvicorn
 import logging
 import os
+
+from pydantic import BaseModel
 
 logger = logging.getLogger("FinanceDataAPI")
 
@@ -16,7 +21,7 @@ formatter = logging.Formatter(
 )
 
 LOG_DIR_ABS_PATH = os.path.abspath(
-    "D:\PROJECT\QUANTITATIVE_INVESTING\FinanceDataAPI\log")  # todo 将path的读入改为从配置文件中获， 直接写在代码中不安全
+    r"D:\PROJECT\QUANTITATIVE_INVESTING\FinanceDataAPI\log")  # todo 将path的读入改为从配置文件中获， 直接写在代码中不安全
 LOG_FILE_NAME = os.path.join(LOG_DIR_ABS_PATH, "FinanceDataAPI.log")
 
 # 输出到日志文件
@@ -40,19 +45,48 @@ async def test():
     return {"message": "Hello test"}
 
 
-def job():
-    print("I'm working...")
-    print("debug---------")
-    print("info---------")
-    print("warning---------")
-    print("error---------")
+class ComponentItem(BaseModel):
+    component_class_name: str
+    pre_component_name: Optional[str]
+    component_arguments: Dict[str, Any]
+    ...
+
+
+class JobItem(BaseModel):
+    pipeline_structure: Dict[str, ComponentItem]
+
+
+@app.post("/job/submit")
+def job(job_item: JobItem):
+    print(job_item)
+    return job_item.__str__()
+    ...
+
+
+def scheduler_test():
+    print("this is a scheduler test")
+    # submit a job to the server
+
+    # load json file
+    json_file_path = os.path.abspath(
+        r"D:\PROJECT\QUANTITATIVE_INVESTING\FinanceDataAPI\examples\scheduled_jobs\trade_day\bao_stock_trade_day.json")
+    with open(json_file_path, "r") as f:
+        job_json = json.load(f)
+    print(job_json)
+    # submit job
+
+    response = requests.post("http://127.0.0.1:8000/job/submit", json=job_json)
+    print(response.json())
+
+    print(f"response status code: {response.status_code}")
+    print(f"response content: {response.content}")
 
 
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting BackgroundScheduler")
     scheduler = BackgroundScheduler()
-    scheduler.add_job(job, 'cron', second='*/3')
+    scheduler.add_job(scheduler_test, 'cron', second='*/3')
     scheduler.start()
 
 
