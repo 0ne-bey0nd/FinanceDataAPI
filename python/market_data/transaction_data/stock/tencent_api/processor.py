@@ -1,13 +1,15 @@
 import json
 import pandas as pd
-from market_data.pipeline._base import processor_base
+from pipeline import ProcessorBase
 import datetime
 import decimal
+from market_data.transaction_data.stock.tencent_api.tencent_api_transaction import TencentApiTransaction
+from logger import get_manual_logger
 
-from market_data.pipeline.transaction_data.stock.tencent_api.tencent_api_transaction import TencentApiTransaction
+logger = get_manual_logger()
 
 
-class TransactionDataProcessor(processor_base.ProcessorBase):
+class TransactionDataProcessor(ProcessorBase):
     def __init__(self, *args, **kwargs):
         super(TransactionDataProcessor, self).__init__(*args, **kwargs)
 
@@ -20,6 +22,7 @@ class TransactionDataProcessor(processor_base.ProcessorBase):
 
         raw_data = in_table[in_table_raw_data_column_name][0]
         data = json.loads(raw_data)['data']
+        logger.debug(data)
         date = data['date']  # format 'yyyymmdd'
 
         transaction_list = data['data']

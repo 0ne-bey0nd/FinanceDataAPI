@@ -1,8 +1,8 @@
 import pandas as pd
-from market_data.pipeline._base import processor_base
+from pipeline import ProcessorBase
 
 
-class TradeDayProcessor(processor_base.ProcessorBase):
+class TradeDayProcessor(ProcessorBase):
     def __init__(self, *args, **kwargs):
         super(TradeDayProcessor, self).__init__(*args, **kwargs)
 

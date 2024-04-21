@@ -1,5 +1,5 @@
 import pandas as pd
-from market_data.pipeline._base import ProducerBase
+from pipeline import ProducerBase
 import requests
 
 

@@ -1,7 +1,7 @@
 import baostock as bs
 import pandas as pd
 import numpy as np
-from market_data.pipeline._base import ProducerBase
+from pipeline import ProducerBase
 
 
 class TradeDayProducer(ProducerBase):

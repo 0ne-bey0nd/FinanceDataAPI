@@ -1,6 +1,7 @@
 import json
 import pymysql
 import pymysql.cursors
+from settings import STORAGE_CONFIG_FILE_PATH
 
 
 class MySQLStorageEngine:
@@ -59,7 +60,7 @@ class StorageEngineManager:
         self.storage_engine_type_list: list = []
         self.mysql_storage_engine_dict: dict = {}
 
-    def load_storage_config(self, storage_config_file_path):
+    def read_storage_config(self, storage_config_file_path):
         try:
             with open(storage_config_file_path, "r") as f:
                 storage_config_dict = json.load(f)
@@ -75,8 +76,8 @@ class StorageEngineManager:
             exit(1)
         return storage_config_dict
 
-    def parse_storage_config(self, storage_config_file_path):
-        storage_config_dict = self.load_storage_config(storage_config_file_path)
+    def load_storage_config(self, storage_config_file_path):
+        storage_config_dict = self.read_storage_config(storage_config_file_path)
         self.storage_engine_type_list = list(storage_config_dict.keys())
 
         mysql_storage_config_dict = storage_config_dict.get("mysql")
@@ -89,12 +90,11 @@ class StorageEngineManager:
 
 
 
-
 if __name__ == '__main__':
     storager_manager = StorageEngineManager.get_instance()
     from settings import STORAGE_CONFIG_FILE_PATH
 
-    storager_manager.parse_storage_config(STORAGE_CONFIG_FILE_PATH)
+    storager_manager.load_storage_config(STORAGE_CONFIG_FILE_PATH)
     print(storager_manager)
     print(storager_manager.storage_engine_type_list)
     print(storager_manager.mysql_storage_engine_dict)

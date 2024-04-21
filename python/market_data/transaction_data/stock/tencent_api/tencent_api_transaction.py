@@ -1,4 +1,4 @@
-from market_data._base.transaction_base import TransactionBase
+from market_data import TransactionBase
 import decimal
 
 

@@ -1,5 +1,7 @@
 import queue
+from logger import get_manual_logger
 
+logger = get_manual_logger()
 
 class Pipeline(object):
     def __init__(self, *args, **kwargs):
@@ -9,7 +11,7 @@ class Pipeline(object):
         self.input_data = None
         self._output_data = None
 
-    def add_component_class(self, component_class):
+    def add_component_class(self, component_class): # todo: 加入参数，可以设计为add task
         self.component_class_queue.put(component_class)
         self.component_name_to_class_dict[component_class.get_component_name()] = component_class
 
@@ -31,14 +33,12 @@ class Pipeline(object):
 
 
 if __name__ == '__main__':
-    from market_data.pipeline._base import *
+    from pipeline import ComponentBase
     import inspect
     import os
-
     import importlib
-    import sys
 
-    PIPELINE_MODULE_PATH = os.path.dirname(importlib.import_module('market_data.pipeline').__file__)
+    PIPELINE_MODULE_PATH = os.path.dirname(importlib.import_module('pipeline').__file__)
     components_path = os.path.join(PIPELINE_MODULE_PATH, 'components')
 
     pipeline_module_path_list = []

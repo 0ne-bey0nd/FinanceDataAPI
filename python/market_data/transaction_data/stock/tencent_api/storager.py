@@ -1,5 +1,5 @@
 import pandas as pd
-from market_data.pipeline._base import storager_base
+from pipeline import StoragerBase
 from manager.storage_engine_manager import StorageEngineManager
 from logger import get_manual_logger
 import timeit
@@ -8,7 +8,7 @@ storage_engine_manager = StorageEngineManager.get_instance()
 logger = get_manual_logger()
 
 
-class TransactionDataStorager(storager_base.StoragerBase):
+class TransactionDataStorager(StoragerBase):
     def __init__(self, *args, **kwargs):
         super(TransactionDataStorager, self).__init__(*args, **kwargs)
 

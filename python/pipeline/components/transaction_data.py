@@ -1,8 +1,8 @@
-from market_data.pipeline.transaction_data.stock.tencent_api.processor import \
+from market_data.transaction_data.stock.tencent_api.processor import \
     TransactionDataProcessor as TencentApiTransactionDataProcessor
-from market_data.pipeline.transaction_data.stock.tencent_api.producer import \
+from market_data.transaction_data.stock.tencent_api.producer import \
     TransactionDataProducer as TencentApiTransactionDataProducer
-from market_data.pipeline.transaction_data.stock.tencent_api.storager import \
+from market_data.transaction_data.stock.tencent_api.storager import \
     TransactionDataStorager as TencentApiTransactionDataStorager
 
 TencentApiTransactionDataProducer.set_component_name('TencentApiTransactionDataProducer')

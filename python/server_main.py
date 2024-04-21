@@ -1,17 +1,16 @@
-import asyncio
 import json
-import time
-from typing import Optional, Dict, Any, List
 import requests
-from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 import uvicorn
 import os
-from pydantic import BaseModel
-from market_data.pipeline._base import *
-import inspect
-import importlib
-from logger import get_default_logger, get_manual_logger
+
+from settings import DEBUG_SYMBOL, STORAGE_CONFIG_FILE_PATH, scheduled_jobs_config_dir_path
+from manager.component_manager import ComponentManager
+from manager.storage_engine_manager import StorageEngineManager
+from manager.scheduled_jobs_manager import ScheduledJobsManager
+from apps.job_app import job_router
+
+from logger import get_manual_logger
 
 logger = get_manual_logger()
 app = FastAPI()
@@ -28,58 +27,6 @@ async def test():
     # await asyncio.sleep(3)    # 异步阻塞不会停止整个程序，但会阻塞当前路由的响应
     # time.sleep(3)             # 非异步阻塞会停止整个程序，包括其他路由的响应
     return {"message": "Hello test"}
-
-
-class ComponentItem(BaseModel):
-    component_class_name: str
-    pre_component_name: Optional[str]
-    component_arguments: Dict[str, Any]
-    ...
-
-
-class JobItem(BaseModel):
-    pipeline_structure: Dict[str, ComponentItem]
-
-
-def register_component():
-    PIPELINE_MODULE_PATH = os.path.dirname(importlib.import_module('market_data.pipeline').__file__)
-    components_path = os.path.join(PIPELINE_MODULE_PATH, 'components')
-
-    pipeline_module_path_list = []
-    component_class_list = []
-    component_name_to_class_dict = {}
-
-    # 遍历components目录下的所有py文件
-    for root, dirs, files in os.walk(components_path):
-        for file in files:
-            if file.endswith('.py'):
-                file_path = os.path.join(root, file)
-                pipeline_module_path_list.append(file_path)
-
-    from pathlib import Path
-
-    def _get_module_name_by_path(path, base):
-        return '.'.join(path.resolve().relative_to(base.resolve()).with_suffix('').parts)
-
-    for pipeline_module_path in pipeline_module_path_list:
-        module_name = _get_module_name_by_path(Path(pipeline_module_path), Path(PIPELINE_MODULE_PATH))
-        module = importlib.import_module(module_name)
-        for name, obj in inspect.getmembers(module):
-            if inspect.isclass(obj) and issubclass(obj, ComponentBase):
-                component_class_list.append(obj)
-                component_name_to_class_dict[obj.get_component_name()] = obj
-
-    logger.debug(component_name_to_class_dict)
-
-
-@app.post("/job/submit")
-def job(job_item: JobItem):
-    logger.debug(job_item)
-    component_item_dict = job_item.pipeline_structure
-    for component_name, component_item in component_item_dict.items():
-        logger.debug(f"component_name: {component_name} component_item: {component_item}")
-
-    return job_item.__str__()
 
 
 def scheduler_test():
@@ -103,10 +50,22 @@ def scheduler_test():
 
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Starting register component")
+
+    component_manager = ComponentManager.get_instance()
+    component_manager.register_component()
+
+    logger.info("Starting load storage config")
+
+    storager_manager = StorageEngineManager.get_instance()
+    storager_manager.load_storage_config(STORAGE_CONFIG_FILE_PATH)
+
+    logger.info("Starting load scheduled jobs config")
+    scheduled_jobs_manager = ScheduledJobsManager.get_instance()
+    scheduled_jobs_manager.load_scheduled_jobs_config(scheduled_jobs_config_dir_path)
+
     logger.info("Starting BackgroundScheduler")
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(scheduler_test, 'cron', second='*/3')
-    scheduler.start()
+    scheduled_jobs_manager.start_scheduler()
 
 
 if __name__ == '__main__':

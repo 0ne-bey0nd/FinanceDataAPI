@@ -1,5 +1,5 @@
 import pandas as pd
-from market_data.pipeline._base import storager_base
+from pipeline import StoragerBase
 from manager.storage_engine_manager import StorageEngineManager
 from logger import get_manual_logger
 
@@ -7,7 +7,7 @@ storage_engine_manager = StorageEngineManager.get_instance()
 logger = get_manual_logger()
 
 
-class TradeDayStorager(storager_base.StoragerBase):
+class TradeDayStorager(StoragerBase):
     def __init__(self, *args, **kwargs):
         super(TradeDayStorager, self).__init__(*args, **kwargs)
 
