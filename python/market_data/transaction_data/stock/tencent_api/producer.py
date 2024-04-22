@@ -7,12 +7,20 @@ class TransactionDataProducer(ProducerBase):
 
     def produce(self, *args, **kwargs) -> pd.DataFrame:
         # extract arguments
-        stock_code = kwargs.get('stock_code', '')
+        stock_code_list = kwargs.get('stock_code_list', [])
         limit = kwargs.get('limit', 6)
 
-        return self.get_transaction_data(stock_code, limit)
+        return self.get_transaction_data(stock_code_list, limit)
 
-    def get_transaction_data(self, stock_code: str, limit: int = 6) -> pd.DataFrame:
+    def get_transaction_data(self, stock_code_list: list, limit: int) -> pd.DataFrame:
+        output_data = []
+        for stock_code in stock_code_list:
+            raw_transaction_data = self.get_one_stock_transaction_data(stock_code, limit)
+            output_data.append((stock_code, raw_transaction_data))
+
+        return pd.DataFrame(output_data, columns=['stock_code', 'raw_data'])
+
+    def get_one_stock_transaction_data(self, stock_code: str, limit: int = 6) -> str:
         ## stock_code rationality check
 
         ## limit rationality check
@@ -24,15 +32,14 @@ class TransactionDataProducer(ProducerBase):
             "https": "http://127.0.0.1:7890",
         }
         response = requests.get(url, proxies=proxy)
-
-        output_table = pd.DataFrame([[response.text]], columns=['raw_data'])
-        return output_table
+        return response.text
 
 
 if __name__ == '__main__':
     producer = TransactionDataProducer()
 
-    stock_code = 'sh600519'
-    transaction_data_data = producer.produce(stock_code=stock_code)
-    print(transaction_data_data)
+    stock_code_list = ['sh600519', 'sz000001']
+    transaction_data_data = producer.produce(stock_code_list=stock_code_list)
+    print(f"transaction_data_data: {transaction_data_data}")
+    print(f"transaction_data_data.shape: {transaction_data_data.shape}")
     print(transaction_data_data['raw_data'][0])

@@ -1,28 +1,31 @@
 import queue
-from logger import get_manual_logger
+from typing import Type
 
+from logger import get_manual_logger
+from pipeline import ComponentBase
 logger = get_manual_logger()
+
 
 class Pipeline(object):
     def __init__(self, *args, **kwargs):
-        self.component_class_queue = queue.Queue()
+        self.task_queue: queue.Queue[tuple[Type[ComponentBase], dict]] = queue.Queue()
         self.component_name_to_class_dict = {}
         self.is_running = False
         self.input_data = None
         self._output_data = None
 
-    def add_component_class(self, component_class): # todo: 加入参数，可以设计为add task
-        self.component_class_queue.put(component_class)
+    def add_task(self, component_class, component_arguments: dict):
+        self.task_queue.put((component_class, component_arguments))
         self.component_name_to_class_dict[component_class.get_component_name()] = component_class
 
     def run(self):
         self.is_running = True
         pre_component_output = self.input_data
-        while not self.component_class_queue.empty():
-            component_class = self.component_class_queue.get()
+        while not self.task_queue.empty():
+            component_class, component_arguments = self.task_queue.get()
             component_object = component_class()
             component_object.input_data = pre_component_output
-            component_object.run()
+            component_object.run( **component_arguments)
             pre_component_output = component_object.output_data
         self.is_running = False
         self._output_data = pre_component_output
@@ -70,9 +73,9 @@ if __name__ == '__main__':
     print(component_name_to_class_dict)
 
     pipeline = Pipeline()
-    pipeline.add_component_class(component_name_to_class_dict['BaoStockTradeDayProducer'])
-    pipeline.add_component_class(component_name_to_class_dict['BaoStockTradeDayProcessor'])
-    pipeline.add_component_class(component_name_to_class_dict['BaoStockTradeDayStorager'])
+    pipeline.add_task(component_name_to_class_dict['BaoStockTradeDayProducer'])
+    pipeline.add_task(component_name_to_class_dict['BaoStockTradeDayProcessor'])
+    pipeline.add_task(component_name_to_class_dict['BaoStockTradeDayStorager'])
 
     print(pipeline.component_name_to_class_dict)
 

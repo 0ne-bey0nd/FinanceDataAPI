@@ -28,12 +28,12 @@ class Job:
         ...
 
     @staticmethod
-    def create_job(job_id, job_item):
+    def create_job(job_id, job_item:JobItem):
         job = Job()
         job.job_id = job_id
         job.job_item = job_item
 
-        logger.debug(job_item.trigger)
+        logger.debug(f"trigger: {job_item.trigger}")
 
         job.pipeline = Pipeline()
         for component_name, component_item in job_item.pipeline_structure.items():
@@ -44,7 +44,7 @@ class Job:
 
             component_arguments = component_item.component_arguments
             component_class = ComponentManager.get_instance().get_component_class_by_name(component_class_name)
-            job.pipeline.add_component_class(component_class)
+            job.pipeline.add_task(component_class, component_arguments)
             logger.debug(f"Component added: {component_class_name} {component_arguments}")
 
         return job
@@ -53,6 +53,7 @@ class Job:
         logger.info(f"job begin to run: {self}")
         self.pipeline.run()
         logger.info(f"job end to run: {self}")
+        return True
         ...
 
     def __str__(self):

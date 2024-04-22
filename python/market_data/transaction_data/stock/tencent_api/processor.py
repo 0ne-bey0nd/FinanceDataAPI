@@ -18,9 +18,23 @@ class TransactionDataProcessor(ProcessorBase):
 
     def process_transaction_data(self, input_data: pd.DataFrame) -> pd.DataFrame:
         in_table = input_data.copy()
-        in_table_raw_data_column_name = 'raw_data'
+        in_table_shape = in_table.shape
+        logger.debug(f"in_table_shape: {in_table_shape}")
 
-        raw_data = in_table[in_table_raw_data_column_name][0]
+        output_data = []
+        for idx, row in in_table.iterrows():
+            stock_code = row['stock_code']
+            raw_data = row['raw_data']
+            processed_data_table = self.process_one_stock_transaction_data(stock_code, raw_data)
+            logger.debug(f"processed_data_table.shape: {processed_data_table.shape}")
+            logger.debug(f"processed_data_table: {processed_data_table}")
+            output_data.append((stock_code, processed_data_table))
+
+        output_table = pd.DataFrame(output_data, columns=['stock_code', 'processed_data_table'])
+
+        return output_table
+
+    def process_one_stock_transaction_data(self, stock_code: str, raw_data: str) -> pd.DataFrame:
         data = json.loads(raw_data)['data']
         logger.debug(data)
         date = data['date']  # format 'yyyymmdd'
@@ -97,13 +111,16 @@ class TransactionDataProcessor(ProcessorBase):
 if __name__ == '__main__':
     from producer import TransactionDataProducer
 
-    stock_code = 'sh600519'
+    stock_code_list = ['sh600519', 'sz000001']
 
-    transaction_data = TransactionDataProducer().produce(stock_code=stock_code, limit=6)
+    transaction_data = TransactionDataProducer().produce(stock_code_list=stock_code_list, limit=6)
     # print(trade_day_data)
     processor = TransactionDataProcessor()
     processed_trade_day_data = processor.process_transaction_data(transaction_data)
 
-    print(processed_trade_day_data)
+    print(f"processed_trade_day_data: {processed_trade_day_data}")
+    print(f"processed_trade_day_data.shape: {processed_trade_day_data.shape}")
+
     for idx, column_name in enumerate(processed_trade_day_data.columns):
         print(f"column {idx + 1}: name={column_name}, type={type(processed_trade_day_data[column_name][0])}")
+

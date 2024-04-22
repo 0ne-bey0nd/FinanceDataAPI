@@ -39,7 +39,6 @@ class ComponentManager:
         return self._component_name_to_class_dict.get(component_name)
 
     def register_component(self):
-
         components_path = os.path.join(PIPELINE_MODULE_PATH, 'components')
         self.__register_component_from_dir(components_path)
 

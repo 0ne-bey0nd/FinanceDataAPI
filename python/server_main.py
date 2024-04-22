@@ -29,25 +29,6 @@ async def test():
     return {"message": "Hello test"}
 
 
-def scheduler_test():
-    logger.debug("this is a scheduler test")
-    # submit a job to the server
-
-    # load json file
-    json_file_path = os.path.abspath(
-        r"D:\PROJECT\QUANTITATIVE_INVESTING\examples\scheduled_jobs\trade_day\bao_stock_trade_day.json")
-    with open(json_file_path, "r") as f:
-        job_json = json.load(f)
-    logger.debug(job_json)
-    # submit job
-
-    response = requests.post("http://127.0.0.1:8000/job/submit", json=job_json)
-    logger.debug(response.json())
-
-    logger.debug(f"response status code: {response.status_code}")
-    logger.debug(f"response content: {response.content}")
-
-
 @app.on_event("startup")
 async def startup_event():
     logger.info("Starting register component")
@@ -66,6 +47,9 @@ async def startup_event():
 
     logger.info("Starting BackgroundScheduler")
     scheduled_jobs_manager.start_scheduler()
+
+    app.include_router(job_router)
+
 
 
 if __name__ == '__main__':
