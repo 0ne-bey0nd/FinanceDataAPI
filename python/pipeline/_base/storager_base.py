@@ -1,7 +1,5 @@
 from . import ComponentBase
 import pandas as pd
-from manager.storage_engine_manager import StorageEngineManager
-from logger import get_manual_logger
 
 class StoragerBase(ComponentBase):
 

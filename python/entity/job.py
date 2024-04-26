@@ -1,39 +1,45 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
-from pipeline import Pipeline
-from logger import get_manual_logger
+from typing import Optional, Any
+from pipeline import Pipeline, ComponentBase
+from utils.log_utils import get_logger
 from manager.component_manager import ComponentManager
+import threading
 
-logger = get_manual_logger()
+logger = get_logger()
 
 
 class ComponentItem(BaseModel):
     component_class_name: str
     pre_component_name: Optional[str]
-    component_arguments: Dict[str, Any]
+    component_arguments: dict[str, Any]
     ...
 
 
 class JobItem(BaseModel):
-    pipeline_structure: Dict[str, ComponentItem]
-    trigger: Dict[str, Any]
+    pipeline_structure: dict[str, ComponentItem]
 
 
 class Job:
+    class JobStatus:
+        WAITING = "waiting"
+        RUNNING = "running"
+        FINISHED = "finished"
+        FAILED = "failed"
 
     def __init__(self):
         self.job_item: JobItem = None
         self.job_id: str = None
-        self.pipeline = None
+        self.pipeline: Pipeline = None
+        self.mutex: threading.Lock = None
+        self.status: bool = False
         ...
 
     @staticmethod
-    def create_job(job_id, job_item:JobItem):
+    def create_job(job_id: str, job_item: JobItem) -> "Job":
         job = Job()
         job.job_id = job_id
         job.job_item = job_item
-
-        logger.debug(f"trigger: {job_item.trigger}")
+        job.mutex = threading.Lock()
 
         job.pipeline = Pipeline()
         for component_name, component_item in job_item.pipeline_structure.items():
@@ -44,20 +50,20 @@ class Job:
 
             component_arguments = component_item.component_arguments
             component_class = ComponentManager.get_instance().get_component_class_by_name(component_class_name)
-            job.pipeline.add_task(component_class, component_arguments)
+            logger.info(f"is subclass: {issubclass(component_class, ComponentBase)}")
+            job.pipeline.add_component(component_class, component_arguments)
             logger.debug(f"Component added: {component_class_name} {component_arguments}")
 
         return job
 
-    def run(self):
-        logger.info(f"job begin to run: {self}")
+    def run(self) -> bool:
+        logger.info(f"{self} begin to run")
         self.pipeline.run()
-        logger.info(f"job end to run: {self}")
+        logger.info(f"{self} end to run")
         return True
-        ...
 
     def __str__(self):
-        return f"Job(job_id={self.job_id}, job_item={self.job_item})"
+        return f"Job(job_id={self.job_id})"
 
     def __repr__(self):
         return self.__str__()

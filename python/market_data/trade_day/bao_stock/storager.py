@@ -1,10 +1,10 @@
 import pandas as pd
 from pipeline import StoragerBase
 from manager.storage_engine_manager import StorageEngineManager
-from logger import get_manual_logger
+from utils.log_utils import get_logger
 
 storage_engine_manager = StorageEngineManager.get_instance()
-logger = get_manual_logger()
+logger = get_logger()
 
 
 class TradeDayStorager(StoragerBase):
@@ -15,7 +15,8 @@ class TradeDayStorager(StoragerBase):
         return self.storage_trade_day_data(input_data)
 
     def storage_trade_day_data(self, processed_trade_day_data: pd.DataFrame) -> pd.DataFrame:
-        sql = "CALL insert_trade_day(%s, %s)"
+        singal_sql = "CALL insert_trade_day('{}', '{}');"
+        final_sql = ""
 
         logger.debug(f"processed_trade_day_data.shape: {processed_trade_day_data.shape}")
         for mysql_storage_engine_name, mysql_storage_engine in storage_engine_manager.get_mysql_storage_engine_dict().items():
@@ -25,11 +26,18 @@ class TradeDayStorager(StoragerBase):
             with conn:
                 with conn.cursor() as cursor:
                     for index, row in processed_trade_day_data.iterrows():
-                        cursor.execute(sql, (*row,))
+                        logger.debug(f"row: {row}")
+                        sql = singal_sql.format(*row)
+                        final_sql += sql + "\n"
+                    logger.debug(f"before execute final_sql: {final_sql}")
+                    cursor.execute(final_sql)
+                    logger.debug(f"after execute")
                 conn.commit()
+        logger.debug(f"finish storage!")
 
         success = pd.DataFrame([['success']], columns=['status'])
         return success
+
 
 
 if __name__ == '__main__':

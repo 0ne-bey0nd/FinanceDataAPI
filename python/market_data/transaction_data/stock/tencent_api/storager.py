@@ -1,11 +1,11 @@
 import pandas as pd
 from pipeline import StoragerBase
 from manager.storage_engine_manager import StorageEngineManager
-from logger import get_manual_logger
+from utils.log_utils import get_logger
 import timeit
 
 storage_engine_manager = StorageEngineManager.get_instance()
-logger = get_manual_logger()
+logger = get_logger()
 
 
 class TransactionDataStorager(StoragerBase):
@@ -40,8 +40,9 @@ class TransactionDataStorager(StoragerBase):
                     processed_data_table = row['processed_data_table']
                     logger.debug(f"stock_code: {stock_code}")
                     logger.debug(f"processed_data_table.shape: {processed_data_table.shape}")
-                    success = self.storage_one_stock_transaction_data(processed_data_table, stock_code, conn)
-                    logger.debug(f"success: {success}")
+                    success = self.storage_one_stock_transaction_data(processed_data_table, stock_code,
+                                                                      conn)  # todo: use async
+                    logger.info(f"success: {success}")
                     if not success:
                         break
 

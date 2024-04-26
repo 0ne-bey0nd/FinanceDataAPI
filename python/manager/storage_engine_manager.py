@@ -1,7 +1,7 @@
 import json
 import pymysql
 import pymysql.cursors
-from settings import STORAGE_CONFIG_FILE_PATH
+from pymysql.constants import CLIENT
 
 
 class MySQLStorageEngine:
@@ -23,7 +23,8 @@ class MySQLStorageEngine:
 
     def get_connection_context(self) -> pymysql.connections.Connection:
         conn = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
-                               database=self.database, charset=self.charset, cursorclass=self.cursorClass)
+                               database=self.database, charset=self.charset, cursorclass=self.cursorClass,
+                               client_flag=CLIENT.MULTI_STATEMENTS)
 
         return conn
 
@@ -58,7 +59,7 @@ class StorageEngineManager:
 
     def __init__(self):
         self.storage_engine_type_list: list = []
-        self.mysql_storage_engine_dict: dict = {}
+        self.mysql_storage_engine_dict: dict[str, MySQLStorageEngine] = {}
 
     def read_storage_config(self, storage_config_file_path):
         try:
@@ -87,7 +88,6 @@ class StorageEngineManager:
 
     def get_mysql_storage_engine_dict(self) -> dict[str, MySQLStorageEngine]:
         return self.mysql_storage_engine_dict
-
 
 
 if __name__ == '__main__':

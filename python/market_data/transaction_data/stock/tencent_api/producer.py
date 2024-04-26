@@ -1,7 +1,9 @@
 import pandas as pd
 from pipeline import ProducerBase
 import requests
+from utils.log_utils import get_logger
 
+logger = get_logger()
 
 class TransactionDataProducer(ProducerBase):
 
@@ -15,7 +17,7 @@ class TransactionDataProducer(ProducerBase):
     def get_transaction_data(self, stock_code_list: list, limit: int) -> pd.DataFrame:
         output_data = []
         for stock_code in stock_code_list:
-            raw_transaction_data = self.get_one_stock_transaction_data(stock_code, limit)
+            raw_transaction_data = self.get_one_stock_transaction_data(stock_code, limit)  # todo: use async
             output_data.append((stock_code, raw_transaction_data))
 
         return pd.DataFrame(output_data, columns=['stock_code', 'raw_data'])

@@ -1,6 +1,8 @@
 import pandas as pd
 from pipeline import ProcessorBase
+from utils.log_utils import get_logger
 
+logger = get_logger()
 
 class TradeDayProcessor(ProcessorBase):
     def __init__(self, *args, **kwargs):

@@ -1,24 +1,20 @@
-import json
-import requests
 from fastapi import FastAPI
 import uvicorn
-import os
-
-from settings import DEBUG_SYMBOL, STORAGE_CONFIG_FILE_PATH, scheduled_jobs_config_dir_path
+from settings import STORAGE_CONFIG_FILE_PATH, SCHEDULED_JOBS_CONFIG_DIR_PATH, SERVER_HOST, SERVER_PORT, RELOAD_SYMBOL
 from manager.component_manager import ComponentManager
 from manager.storage_engine_manager import StorageEngineManager
 from manager.scheduled_jobs_manager import ScheduledJobsManager
+from manager.job_manager import JobManager
 from apps.job_app import job_router
+from utils.log_utils import get_logger
 
-from logger import get_manual_logger
-
-logger = get_manual_logger()
+logger = get_logger()
 app = FastAPI()
 
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello FinanceDataAPI"}
 
 
 @app.get("/test")
@@ -41,16 +37,19 @@ async def startup_event():
     storager_manager = StorageEngineManager.get_instance()
     storager_manager.load_storage_config(STORAGE_CONFIG_FILE_PATH)
 
+    logger.info("Starting initialize job manager")
+    job_manager = JobManager.get_instance()
+    job_manager.initialize()
+
     logger.info("Starting load scheduled jobs config")
     scheduled_jobs_manager = ScheduledJobsManager.get_instance()
-    scheduled_jobs_manager.load_scheduled_jobs_config(scheduled_jobs_config_dir_path)
+    scheduled_jobs_manager.load_scheduled_jobs_config(SCHEDULED_JOBS_CONFIG_DIR_PATH)
 
-    logger.info("Starting BackgroundScheduler")
-    scheduled_jobs_manager.start_scheduler()
+    # logger.info("Starting BackgroundScheduler")
+    # scheduled_jobs_manager.start_scheduler()
 
     app.include_router(job_router)
 
 
-
 if __name__ == '__main__':
-    uvicorn.run(app="server_main:app", host="0.0.0.0", port=8000, log_level="debug", reload=True)
+    uvicorn.run(app="server_main:app", host=SERVER_HOST, port=SERVER_PORT, reload=RELOAD_SYMBOL)

@@ -4,9 +4,9 @@ from pipeline import ProcessorBase
 import datetime
 import decimal
 from market_data.transaction_data.stock.tencent_api.tencent_api_transaction import TencentApiTransaction
-from logger import get_manual_logger
+from utils.log_utils import get_logger
 
-logger = get_manual_logger()
+logger = get_logger()
 
 
 class TransactionDataProcessor(ProcessorBase):
@@ -19,7 +19,7 @@ class TransactionDataProcessor(ProcessorBase):
     def process_transaction_data(self, input_data: pd.DataFrame) -> pd.DataFrame:
         in_table = input_data.copy()
         in_table_shape = in_table.shape
-        logger.debug(f"in_table_shape: {in_table_shape}")
+        logger.info(f"in_table_shape: {in_table_shape}")
 
         output_data = []
         for idx, row in in_table.iterrows():
@@ -123,4 +123,3 @@ if __name__ == '__main__':
 
     for idx, column_name in enumerate(processed_trade_day_data.columns):
         print(f"column {idx + 1}: name={column_name}, type={type(processed_trade_day_data[column_name][0])}")
-

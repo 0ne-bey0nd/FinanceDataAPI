@@ -2,7 +2,9 @@ import baostock as bs
 import pandas as pd
 import numpy as np
 from pipeline import ProducerBase
+from utils.log_utils import get_logger
 
+logger = get_logger()
 
 class TradeDayProducer(ProducerBase):
     def __init__(self, *args, **kwargs):
