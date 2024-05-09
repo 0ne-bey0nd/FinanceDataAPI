@@ -26,7 +26,7 @@ class ScheduledJobsManager:
     def __init__(self):
         self.scheduler = BackgroundScheduler()
         self.job_item_list = []
-        self.job_app_url = f"http://{SERVER_HOST}:{SERVER_PORT}/job/submit"
+        self.job_app_url = f"http://{'127.0.0.1' if SERVER_HOST=='0.0.0.0' else SERVER_HOST}:{SERVER_PORT}/job/submit"
 
     def load_scheduled_jobs_config(self, scheduled_jobs_config_dir_path):
         logger.info(f"Loading scheduled jobs config: {scheduled_jobs_config_dir_path}")
@@ -54,7 +54,7 @@ class ScheduledJobsManager:
         self.job_item_list.append(scheduled_job_item)
 
         def submit_scheduled_job():
-            logger.debug("submit scheduled job")
+            logger.info("submit scheduled job")
             # submit a job to the server
             job_json_dict = json.loads(scheduled_job_item.json())
 
@@ -65,13 +65,13 @@ class ScheduledJobsManager:
             response = requests.post(self.job_app_url, json=job_json_dict)
 
             logger.debug(f"response status code: {response.status_code}")
-            logger.debug(f"response content: {response.content}")
+            logger.info(f"response content: {response.content}")
             ...
 
         trigger_type = scheduled_job_item.trigger.type
         schedule = scheduled_job_item.trigger.arguments
         self.scheduler.add_job(submit_scheduled_job, trigger=trigger_type, **schedule)
-        logger.debug(f"Scheduler job added: {scheduled_job_item}")
+        logger.info(f"Scheduler job added: {scheduled_job_item}")
 
     def start_scheduler(self):
         self.scheduler.start()

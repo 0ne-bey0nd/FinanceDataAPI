@@ -1,1 +1,1 @@
-from .logger_factory import get_logger
+from .logger_factory import LOGGER, LoggerFactory

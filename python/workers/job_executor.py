@@ -1,8 +1,8 @@
 import threading
 from entity.job import Job
 import queue
-from utils.log_utils import get_logger, register_job_logger, delete_job_logger
-
+from utils.log_utils import get_logger, register_job_logger, release_logger_handlers, get_server_logger
+import timeit
 logger = get_logger()
 
 
@@ -15,6 +15,7 @@ class JobExecutor(threading.Thread):
         self.start()
 
     def run_a_job(self, job: Job) -> bool:
+        register_job_logger(job.job_id)
         if not job:
             logger.error("Job is not set!")
             return False
@@ -22,7 +23,6 @@ class JobExecutor(threading.Thread):
             logger.error(f"{job} is {job.status}, not waiting!")
             return False
 
-        register_job_logger(self.ident, job.job_id)
         logger.info(f"Thread id {self.ident} begin to run job: {job}")
         with job.mutex:
             job.status = job.JobStatus.RUNNING
@@ -39,19 +39,23 @@ class JobExecutor(threading.Thread):
                 logger.error(f"Job failed: {job}")
                 job.status = job.JobStatus.FAILED
         logger.info(f"Thread id {self.ident} end to run job: {job}")
-        delete_job_logger(self.ident)
+        release_logger_handlers(self.ident)
         return success
 
     def run(self) -> None:
+        get_server_logger().info(f"JobExecutor {self.executor_id}:{self.ident} started")
         while True:
             job = self.job_queue.get(block=True)
-            logger.info(f"JobExecutor {self.executor_id}:{self.ident} get a job: {job}")
+            being_time = timeit.default_timer()
+            get_server_logger().info(f"JobExecutor {self.executor_id}:{self.ident} get a job: {job}")
             self.current_job = job
 
             self.run_a_job(job)
 
             self.current_job = None
             self.job_queue.task_done()
+            end_time = timeit.default_timer()
+            get_server_logger().info(f"JobExecutor {self.executor_id}:{self.ident} finished a job: {job}, time cost: {end_time - being_time}")
 
 
 class JobExecuteMainThread(threading.Thread):
@@ -64,11 +68,11 @@ class JobExecuteMainThread(threading.Thread):
         self.max_executors = max_executors
 
     def initialize(self):
-        logger.info(f"start job execute main thread with {self.max_executors} executors")
+        get_server_logger().info(f"start job execute main thread with {self.max_executors} executors")
 
         for i in range(self.max_executors):
             job_executor = JobExecutor(i, self._job_queue)
-            logger.info(f"JobExecutor {i}:{job_executor.ident} is created")
+            get_server_logger().info(f"JobExecutor {i}:{job_executor.ident} is created")
             self._job_executor_instance_dict[job_executor.ident] = job_executor
 
     def run(self) -> None:
@@ -78,10 +82,10 @@ class JobExecuteMainThread(threading.Thread):
 
     @classmethod
     def add_job_to_execute(cls, job: Job):
-        logger.debug(f"JobExecuteMainThread.add_job_to_execute: {job}")
+        get_server_logger().debug(f"JobExecuteMainThread.add_job_to_execute: {job}")
         with cls._job_queue_mutex:
             cls._job_queue.put(job)
-            logger.info(f"Job added to the queue: {job}")
+            get_server_logger().info(f"Job added to the queue: {job}")
 
     @classmethod
     def get_job_executor_by_thread_id(cls, thread_id):

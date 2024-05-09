@@ -26,8 +26,8 @@ class TransactionDataProcessor(ProcessorBase):
             stock_code = row['stock_code']
             raw_data = row['raw_data']
             processed_data_table = self.process_one_stock_transaction_data(stock_code, raw_data)
-            logger.debug(f"processed_data_table.shape: {processed_data_table.shape}")
-            logger.debug(f"processed_data_table: {processed_data_table}")
+            # logger.debug(f"processed_data_table.shape: {processed_data_table.shape}")
+            # logger.debug(f"processed_data_table: {processed_data_table}")
             output_data.append((stock_code, processed_data_table))
 
         output_table = pd.DataFrame(output_data, columns=['stock_code', 'processed_data_table'])
@@ -36,7 +36,7 @@ class TransactionDataProcessor(ProcessorBase):
 
     def process_one_stock_transaction_data(self, stock_code: str, raw_data: str) -> pd.DataFrame:
         data = json.loads(raw_data)['data']
-        logger.debug(data)
+        # logger.debug(data)
         date = data['date']  # format 'yyyymmdd'
 
         transaction_list = data['data']
