@@ -24,7 +24,7 @@ class MySQLStorageEngine:
     def get_connection_context(self) -> pymysql.connections.Connection:
         conn = pymysql.connect(host=self.host, port=self.port, user=self.user, password=self.password,
                                database=self.database, charset=self.charset, cursorclass=self.cursorClass,
-                               client_flag=CLIENT.MULTI_STATEMENTS)
+                               client_flag=CLIENT.MULTI_STATEMENTS, autocommit=False)
 
         return conn
 

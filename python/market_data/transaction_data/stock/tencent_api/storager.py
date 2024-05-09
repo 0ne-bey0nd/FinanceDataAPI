@@ -4,7 +4,7 @@ import threading
 import pandas as pd
 from pipeline import StoragerBase
 from manager.storage_engine_manager import StorageEngineManager
-from utils.log_utils import get_logger,get_logger_by_thread_id
+from utils.log_utils import get_logger, get_logger_by_thread_id
 import timeit
 
 storage_engine_manager = StorageEngineManager.get_instance()
@@ -24,6 +24,25 @@ class TransactionDataStorager(StoragerBase):
         exchange = stock_code[:2].upper()
         return code, exchange
 
+    def get_table_name(self, stock_code: str):
+        code, exchange = self.parse_stock_code(stock_code)
+        return f"stock_transaction_data_{code}_{exchange}"
+
+    def sql_check_and_create_stock_transaction_data_table(self, stock_code):
+        table_name = self.get_table_name(stock_code)
+        sql = 'CREATE TABLE IF NOT EXISTS ' + table_name + ' (time DATETIME PRIMARY KEY, price DECIMAL(10, 3), volume INT, transaction_type_id INT,FOREIGN KEY (transaction_type_id) REFERENCES transaction_type_table(transaction_type_id));'
+        return sql
+
+    def sql_insert_stock_transaction_data(self, stock_code, one_stock_processed_transaction_data_table: pd.DataFrame):
+        table_name = self.get_table_name(stock_code)
+        insert_values = ", ".join(
+            f'("{time}", {price}, {volume}, {transaction_type_id})'
+            for _, (time, price, volume, transaction_type_id) in
+            one_stock_processed_transaction_data_table.iterrows()
+        )
+        sql = f'INSERT INTO {table_name} (time, price, volume, transaction_type_id) VALUES {insert_values} ON DUPLICATE KEY UPDATE price=VALUES(price), volume=VALUES(volume), transaction_type_id=VALUES(transaction_type_id);'
+        return sql
+
     def storage_multi_thread(self, input_data: pd.DataFrame, *args, **kwargs) -> pd.DataFrame:
         # extract arguments
         return self.storage_transaction_data_multi_thread(input_data)
@@ -39,7 +58,8 @@ class TransactionDataStorager(StoragerBase):
                 logger.info(f"mysql_storage_engine_name: {mysql_storage_engine_name}")
                 logger.info(f"mysql_storage_engine: {mysql_storage_engine}")
                 task_list.append(executor.submit(self.storage_one_stock_transaction_data_multi_thread,
-                                                 processed_transaction_data_table, mysql_storage_engine,threading.get_ident()))
+                                                 processed_transaction_data_table, mysql_storage_engine,
+                                                 threading.get_ident()))
             result_list = [future.result() for future in task_list]
             logger.info(f"result_list: {result_list}")
             success = all(result_list)
@@ -53,21 +73,19 @@ class TransactionDataStorager(StoragerBase):
         processed_transaction_data_table = processed_transaction_data_table.copy()
 
         # try to create table
-        create_procedure_name = f"create_stock_transaction_data_table"
-        singal_sql = "CALL insert_stock_transaction_data('{}', '{}', '{}', '{}', '{}');"
+
         create_table_sql = ""
         insert_data_sql = ""
         logger.info(f"processed_transaction_data.shape: {processed_transaction_data_table.shape}")
         conn = mysql_storage_engine.get_connection_context()
         for idx, row in processed_transaction_data_table.iterrows():
             stock_code = row['stock_code']
-            code, exchange = self.parse_stock_code(stock_code)
-            formatted_stock_code = f"{code}_{exchange}"
+
             one_stock_processed_transaction_data_table = row['processed_data_table']
-            create_table_sql += f"CALL {create_procedure_name}( '{formatted_stock_code}');" + "\n"
-            for index, one_stock_row in one_stock_processed_transaction_data_table.iterrows():
-                sql = singal_sql.format(formatted_stock_code, *one_stock_row)
-                insert_data_sql += sql + "\n"
+            create_table_sql += self.sql_check_and_create_stock_transaction_data_table(stock_code) + "\n"
+
+            insert_data_sql += self.sql_insert_stock_transaction_data(stock_code,
+                                                                      one_stock_processed_transaction_data_table) + "\n"
         try:
             with conn:
                 with conn.cursor() as cursor:

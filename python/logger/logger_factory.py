@@ -4,7 +4,6 @@ import threading
 from settings import LOG_DIR_PATH, log_config_dict
 
 
-
 class LoggerFactory:
     __thread_id_to_logger_dict = {}
     __thread_id_to_handlers_dict = {}
@@ -20,7 +19,7 @@ class LoggerFactory:
         "default": DEFAULT_LOG_FORMAT_STR,
     }
 
-    __main_thread_logger:logging.Logger = None
+    __main_thread_logger: logging.Logger = None
 
     class LoggerType:
         DEFAULT = "default"
@@ -29,7 +28,7 @@ class LoggerFactory:
 
     @classmethod
     def _init_main_thread_logger(cls):
-        cls.__main_thread_logger  = cls.create_thread_logger()
+        cls.__main_thread_logger = cls.create_thread_logger()
         cls.load_handlers(cls.__main_thread_logger, cls.create_handlers())
 
     @classmethod
@@ -72,7 +71,7 @@ class LoggerFactory:
     @classmethod
     def release_handlers(cls, logger: logging.Logger):
         # print(f"{logger.handlers} to release")
-        for handler in logger.handlers:
+        for handler in logger.handlers[:]:  # this is important for avoiding changing iterable size during iteration
             logger.removeHandler(handler)
 
         cls.__thread_id_to_handlers_dict[threading.get_ident()] = None
@@ -86,7 +85,6 @@ class LoggerFactory:
         logger.setLevel(log_level)
         cls.__thread_id_to_logger_dict[thread_id] = logger
         return logger
-
 
     @classmethod
     def create_handlers(cls, logger_type=LoggerType.SERVER, log_level=logging.DEBUG, job_id=None):
@@ -109,17 +107,20 @@ class LoggerFactory:
         stream_handler.set_name(f"stream_handler_{job_id}")
 
         os.makedirs(log_file_dir_path, exist_ok=True)
-        debug_file_handler = logging.FileHandler(os.path.join(log_file_dir_path, "debug.log"), encoding=cls.DEFAULT_ENCODING)
+        debug_file_handler = logging.FileHandler(os.path.join(log_file_dir_path, "debug.log"),
+                                                 encoding=cls.DEFAULT_ENCODING)
         debug_file_handler.setFormatter(formatter)
         debug_file_handler.setLevel(logging.DEBUG)
         debug_file_handler.set_name(f"debug_file_handler_{job_id}")
 
-        info_file_handler = logging.FileHandler(os.path.join(log_file_dir_path, "info.log"), encoding=cls.DEFAULT_ENCODING)
+        info_file_handler = logging.FileHandler(os.path.join(log_file_dir_path, "info.log"),
+                                                encoding=cls.DEFAULT_ENCODING)
         info_file_handler.setFormatter(formatter)
         info_file_handler.setLevel(logging.INFO)
         info_file_handler.set_name(f"info_file_handler_{job_id}")
 
-        error_file_handler = logging.FileHandler(os.path.join(log_file_dir_path, "error.log"), encoding=cls.DEFAULT_ENCODING)
+        error_file_handler = logging.FileHandler(os.path.join(log_file_dir_path, "error.log"),
+                                                 encoding=cls.DEFAULT_ENCODING)
         error_file_handler.setFormatter(formatter)
         error_file_handler.setLevel(logging.ERROR)
         error_file_handler.set_name(f"error_file_handler_{job_id}")
@@ -131,7 +132,9 @@ class LoggerFactory:
         cls.__thread_id_to_handlers_dict[threading.get_ident()] = handlers
         return handlers
 
+
 LoggerFactory._init_main_thread_logger()
+
 
 class LOGGER:
     @classmethod
@@ -143,6 +146,7 @@ class LOGGER:
     def info(cls, message):
         logger = LoggerFactory.get_logger()
         logger.info(message, stacklevel=2)
+        return logger
 
     @classmethod
     def warning(cls, message):
@@ -153,7 +157,6 @@ class LOGGER:
     def error(cls, message):
         logger = LoggerFactory.get_logger()
         logger.error(message, stacklevel=2)
-
 
 
 if __name__ == '__main__':

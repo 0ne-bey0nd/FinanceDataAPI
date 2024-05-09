@@ -3,7 +3,10 @@ from entity.job import Job
 import queue
 from utils.log_utils import get_logger, register_job_logger, release_logger_handlers, get_server_logger
 import timeit
+
 logger = get_logger()
+
+i = 0
 
 
 class JobExecutor(threading.Thread):
@@ -23,7 +26,7 @@ class JobExecutor(threading.Thread):
             logger.error(f"{job} is {job.status}, not waiting!")
             return False
 
-        logger.info(f"Thread id {self.ident} begin to run job: {job}")
+        logger.info(logger.info(f"Thread id {self.ident} begin to run job: {job}").handlers)
         with job.mutex:
             job.status = job.JobStatus.RUNNING
             try:
@@ -38,24 +41,36 @@ class JobExecutor(threading.Thread):
             else:
                 logger.error(f"Job failed: {job}")
                 job.status = job.JobStatus.FAILED
-        logger.info(f"Thread id {self.ident} end to run job: {job}")
+        l = logger.info(f"Thread id {self.ident} end to run job: {job}")
         release_logger_handlers(self.ident)
+        get_server_logger().info(id(l))
+        get_server_logger().info(l.handlers)
         return success
 
     def run(self) -> None:
+        """
+        the executor won't begin to handle another job until the current job is finished
+        :return:
+        """
         get_server_logger().info(f"JobExecutor {self.executor_id}:{self.ident} started")
+        global i
         while True:
             job = self.job_queue.get(block=True)
             being_time = timeit.default_timer()
             get_server_logger().info(f"JobExecutor {self.executor_id}:{self.ident} get a job: {job}")
             self.current_job = job
+            # get_server_logger().info(f"this is job {i}")
+            # i += 1
+            # import time
+            # time.sleep(100)
 
             self.run_a_job(job)
 
             self.current_job = None
             self.job_queue.task_done()
             end_time = timeit.default_timer()
-            get_server_logger().info(f"JobExecutor {self.executor_id}:{self.ident} finished a job: {job}, time cost: {end_time - being_time}")
+            get_server_logger().info(
+                f"JobExecutor {self.executor_id}:{self.ident} finished a job: {job}, time cost: {end_time - being_time}")
 
 
 class JobExecuteMainThread(threading.Thread):

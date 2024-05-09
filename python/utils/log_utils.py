@@ -3,6 +3,7 @@ from logger import LOGGER,LoggerFactory
 
 def release_logger_handlers(thread_id):
     logger = LoggerFactory.get_logger()
+    logger.info(id(logger))
     LoggerFactory.release_handlers(logger)
 
 
